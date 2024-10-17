@@ -65,6 +65,8 @@ const loginUser = asyncHandler(async(req, res)=>{
     
     const {email, username, password} = req.body;
 
+
+    // validation of fields
     if(!email && !username){
         throw new ApiError(409, "null credentials !");
     }
@@ -81,6 +83,8 @@ const loginUser = asyncHandler(async(req, res)=>{
         throw new ApiError(401, "inValid credentials !")
     }
 
+
+    // generating tokens
     const accessToken  = await isUserExist.accessToken();
     const refreshToken = await isUserExist.refreshToken();
     
@@ -88,8 +92,10 @@ const loginUser = asyncHandler(async(req, res)=>{
         httpOnly : true,
         secure: true
     }
-
+    
     const user = User.findById(isUserExist._id).select("-password -refresh_token");
+    
+    // setting cookies in response
 
     res.status(200).cookie("accessToken", accessToken, options)
     .cookie("refreshToken", refreshToken, options).json(
@@ -99,12 +105,12 @@ const loginUser = asyncHandler(async(req, res)=>{
 
 
 const logoutUser = asyncHandler(async(req, res)=>{
-    
+    // removing refresh_token from the database;
     await User.findOneAndUpdate(
         {_id : req.user._id},
         {$set:{refresh_token:undefined}},{new:true});
     
-
+    // clearing cookies
     res.status(200)
     .clearCookie("accessToken")
     .clearCookie("refreshToken")
